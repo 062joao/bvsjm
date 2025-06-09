@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gestão de Stock Departamento Pré Hospitalar</title>
+
+
+                    <!--------------------------CSS------------------------------------------------>
+
+<style>
+    :root { /* Variáveis CSS globais */
+        --primary-color: #2c3e50; /* cabeçalho e fundo das opções da tabela */
+        --secondary-color: #ecf0f1; /* Cor das letras desde inventario equipamentos, até o rodapé */
+        --accent-color: #e74c3c; /* Cor do botao marcar para aquisição ) */
+        --background-color: #34495e; /* Cor de fundo geral */
+        --font-family: 'Arial', sans-serif; /* Pilha de fontes */
+    }
+
+    body { /* Estilos do corpo da página */
+        margin: 0; /* Remove margem padrão */
+        font-family: var(--font-family); /* Define a fonte */
+        background: var(--background-color); /* Define a cor de fundo da página, SEM MUDAR LETRAS E CORES SECUNDARIAS*/
+        color: var(--secondary-color); /* Define a cor do texto desde inventario equipamentos até o rodapé */
+        display: flex; /* Habilita layout flexbox */
+        flex-direction: column; /* Itens em coluna */
+        min-height: 100vh; /* Altura mínima de 100% da tela */
+    }
+
+    /* Modificado: header agora é .header-container para o efeito sticky */
+    .header-container {
+        background: var(--primary-color);
+        color: var(--secondary-color);
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        /* Adições para o efeito sticky */
+        display: flex; /* Para alinhar logo e título lado a lado */
+        align-items: center; /* Alinha verticalmente no centro */
+        position: center; /* Padrão, será alterado para fixed pelo JS */
+        z-index: 1000; /* Garante que a logo fique acima de outros elementos */
+        transition: all 0.3s ease-in-out; /* Transição suave para as mudanças */
+    }
+
+    /* Estilos para a logo */
+    .logo {
+        /* Se precisar de estilos específicos para o container da logo */
+    }
+
+    .logo img {
+        height: 60px; /* Altura padrão da logo */
+        width: auto; /* Mantém a proporção */
+        margin-right: 20px;
+        transition: height 0.3s ease-in-out, margin-right 0.3s ease-in-out; /* Transição para o tamanho */
+    }
+
+    /* Estilos para o título principal dentro do cabeçalho */
+    .main-title {
+        flex-grow: 1; /* Permite que o título ocupe o espaço restante */
+        text-align: center; /* Centraliza o texto dentro de seu próprio contêiner */
+    }
+
+    .main-title h1 {
+        margin-bottom: 0.5rem;
+        margin-top: 0; /* Garantir que não tenha margem superior extra */
+    }
+
+    .main-title p {
+        margin: 5px 0 0 0;
+        font-size: 1.1em;
+        opacity: 0.8;
+    }
+
+
+    /* Classe para o estado "fixo" do cabeçalho quando rolar */
+    .header-container.sticky {
+        position: fixed; /* Fixa o cabeçalho no topo da tela */
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--primary-color); /* Mantém a cor de fundo */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Sombra para destacar que está fixo */
+        padding: 10px 20px; /* Reduz o padding quando fixo */
+        justify-content: flex-start; /* Alinha a logo e o que sobrar à esquerda */
+    }
+
+    .header-container.sticky .logo img {
+        height: 40px; /* Logo menor quando fixo */
+        margin-right: 15px; /* Ajusta a margem */
+    }
+
+    .header-container.sticky .main-title {
+        opacity: 0; /* Torna o título principal invisível */
+        visibility: hidden; /* Garante que não ocupe espaço */
+        max-height: auto; /* Colapsa o espaço */
+        overflow: hidden; /* Esconde o conteúdo extra */
+        padding: 0; /* Remove padding */
+        margin: 0; /* Remove margens */
+        transition: all 0.3s ease-in-out; /* Transição suave */
+    }
+
+    /* Fim das adições para o efeito sticky */
+
+
+    main { /* Estilos do conteúdo principal */
+        flex: 1; /* Ocupa espaço disponível */
+        padding: 2rem; /* Preenchimento */
+        max-width: auto; /* Largura máxima */
+        margin: 0 auto; /* Centraliza horizontalmente */
+        background: var(--primary-color); /* Usando a variável */
+        border-radius: 8px;
+    }
+
+    h1 { /* Estilos do título H1 */
+      text-align: center;
+        /* Removido margin-bottom: 0.5rem; daqui pois agora é tratado no .main-title h1 */
+    }
+
+    h2 { /* Estilos dos subtítulos H2 */
+        margin-top: 2rem; /* Margem superior */
+        border-bottom: 2px solid var(--background-color); /* linha abaixo de inventario equipamentos */
+        padding-bottom: 0.5rem; /* distancia da linha entre inventario equipamentos */
+        text-align: center;
+    }
+
+    table { /* Estilos das tabelas */
+        width: 100%; /* Largura total */
+        border-collapse: collapse; /* Colapsa bordas das células */
+        margin: 1rem 0; /* Margens */
+    }
+
+    thead { /* Estilos do cabeçalho da tabela */
+        background: var(--primary-color); /* Fundo de texto da cabeça da tela */
+        color: var(--secondary-color) /* Texto da cabeça da tabela */
+    }
+
+    th, td { /* Estilos de células da tabela (cabeçalho e dados) */
+        padding: 0.6rem; /* Preenchimento interno */
+        border: 1px solid #7f8c8d; /* Borda da tabela */
+        text-align: center; /* Texto centralizado */
+    }
+
+    tbody tr:nth-child(even) { /* Estilos de linhas pares do corpo da tabela */
+        background: var(--background-color); /* Fundo linhas pares da tabela*/
+    }
+    /* Adicione estilo para linhas ímpares para contraste, se desejar */
+    tbody tr:nth-child(odd) {
+        background: #2c3e50; /* Cor da linha ímpar, ajustada para sua primary-color */
+    }
+
+    input[type="number"],
+    input[type="date"] {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.4rem;
+        border: 1px solid #bdc3c7;
+        border-radius: 4px;
+        background-color: #ecf0f1; /* Para que os inputs não fiquem escuros no fundo dark */
+        color: #2c3e50; /* Cor do texto dentro dos inputs */
+    }
+
+    button { /* Estilos dos botões */
+        background: var(--accent-color); /* Fundo botao requisição linhas pares */
+        border: none; /* Remove borda */
+        color: var(--secondary-color);
+        padding: 0.6rem 1.2rem; /* Preenchimento */
+        font-weight: bold; /* Texto em negrito */
+        border-radius: 4px; /* Bordas arredondadas */
+        cursor: pointer; /* Cursor de "mãozinha" */
+        transition: background-color 0.3s ease; /* Transição suave de cor */
+    }
+
+    button:hover { /* Estilos ao passar o mouse no botão */
+        background: #c0392b; /* Fundo mais escuro quando passa o mouse no botao */
+    }
+
+    .alert { /* Estilos da classe "alert" */
+        color: var(--accent-color);
+        font-weight: bold; /* Texto em negrito */
+    }
+
+    .success { /* Estilos da classe "success" */
+        color: #27ae60; /* Cor de texto quando termina uma operacao (sucesso) */
+    }
+
+    .flex-row { /* Estilos da classe "flex-row" (layout em linha) */
+        display: flex; /* Habilita flexbox */
+        gap: 1rem; /* Espaço entre itens */
+        align-items: center; /* Alinha itens ao centro vertical */
+        flex-wrap: wrap; /* Permite quebrar linha */
+    }
+
+    .flex-grow { /* Estilos da classe "flex-grow" */
+        flex-grow: 1; /* Ocupa espaço restante */
+    }
+
+    .stock-low { /* Estilos da classe "stock-low" */
+        background-color: #e37878f9; /* Fundo do estoque (estoque baixo) */
+    }
+
+    .expired { /* Estilos da classe "expired" */
+        background-color: #ff0b0bb4; /* Fundo estoque (expirado) */
+    }
+
+    /* Mídia query para responsividade geral e da logo */
+    @media (max-width: 900px) { /* Mídia query: telas até 900px */
+        main { /* Estilos do conteúdo principal para telas menores */
+            padding: 1rem; /* Reduz preenchimento */
+        }
+        th, td { /* Estilos de células da tabela para telas menores */
+            font-size: 0.8rem; /* Reduz tamanho da fonte */
+            padding: 0.4rem; /* Ajusta preenchimento */
+        }
+    }
+
+    @media (max-width: 768px) {
+        .logo img {
+            height: 40px; /* Altura menor para telas pequenas */
+            margin-right: 10px;
+        }
+        .header-container {
+            padding: 15px; /* Reduz padding em telas menores */
+        }
+        .main-title h1 {
+            font-size: 1.5em; /* Reduz tamanho da fonte do título */
+        }
+        .main-title p {
+            font-size: 0.9em; /* Reduz tamanho da fonte do subtítulo */
+        }
+        .header-container.sticky .main-title {
+            /* Força a ocultação total do título em telas muito pequenas quando fixo */
+            display: none;
+        }
+    }
+
+
+    footer { /* Estilos do rodapé */
+        text-align: center; /* Texto centralizado */
+        padding: 1rem; /* Preenchimento */
+        background: var(--primary-color);
+        color: var(--secondary-color);
+    }
+
+    .sort-label { /* Estilos do rótulo de ordenação */
+        cursor: pointer; /* Cursor de "mãozinha" */
+        text-decoration: underline; /* Texto sublinhado */
+        font-weight: 700; /* Texto em negrito */
+        user-select: block; /* seleção de texto */
+    }
+
+    .sort-label:hover { /* Estilos ao passar o mouse no rótulo de ordenação */
+        color: var(--background-color); /* Cor de texto de destaque */
+    }
+
+
+/* Estilos para o botão de remover stock */
+.btn-remove-stock {
+    background-color: #dc3545; /* Cor vermelha para indicar remoção */
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap; /* Evita que o texto quebre */
+}
+
+.btn-remove-stock:hover {
+    background-color: #c82333;
+}
+
+/* Ajustes para os inputs da tabela, se necessário */
+#inventory-table input[type="number"],
+#inventory-table input[type="date"] {
+    width: 80px; /* Largura padrão para inputs de número/data */
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* Ajuste específico para o input de remover stock */
+#inventory-table .remove-container input[type="number"] {
+    width: 60px; /* Largura menor para o input de remoção */
+}
+
+/* Garante que o input e o botão fiquem na mesma linha */
+td > div {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Espaçamento entre elementos dentro da célula */
+}
+</style>  
+                    <!--------------------------CSS------------------------------------------------>
+
+
+
+
+
+                    <!-------HTML---------------------------------------------------------->
+</head>
+<body>
+<header>
+  <div class="header-container">
+    <div class="logo">
+        <img src="bombeiros.png" alt="logo">
+    </div>
+    <div class="head-title">
+       <h1>Gestão de Stock Pré-Hospitalar</h1>
+        <p>Controlo e monitoramento dos equipamentos e materiais das ambulâncias</p>
+    </div>
+    </div>
+<main>
+<section>
+  <h2>Inventário de Equipamentos</h2>
+  <p>Preencha ou atualize os campos de quantidade, validade e média de uso mensal para cada equipamento.</p>
+  <div style="overflow-x:auto;">
+    <table id="inventory-table" aria-label="Tabela de inventário de equipamentos">
+      <thead>
+    <tr>
+        <th id="sort-referencia" aria-sort="descending" aria-label="Ordenar referências da maior para a menor">Referência ⬇️</th>
+        <th>Equipamento</th>
+        <th>Quantidade em Stock</th>
+        <th>Validade</th>
+        <th>Média de Consumo Mensal</th>
+        <th>Stock Mínimo</th>
+        <th>Remover Stock</th> 
+        <th>Requisição</th>
+    </tr>
+</thead>
+      <tbody>
+        <!-- Linhas da tabela populadas por JS -->
+      </tbody>
+    </table>
+  </div>
+  <button id="save-btn" aria-label="Salvar dados">Salvar Dados</button>
+  <p id="save-msg" hidden aria-live="polite" style="margin-top:0.5rem; color:rgb(50, 255, 50);">Dados salvos com sucesso.</p>
+</section>
+
+<section aria-live="polite" aria-atomic="true" aria-relevant="additions" style="margin-top:2rem;">
+  <h2>Alertas</h2>
+  <ul id="alerts-list" style="list-style:none; padding-left:0; min-height:4em;"></ul>
+</section>
+</main>
+
+<footer>
+  <small>Desenvolvido por João Pedro, em FCT <br>para gestão de stock pré-hospitalar &copy; 2024</small>
+</footer>
+                  <!------------------HTML--------------------------->
+                  <!----------JAVASCRIPT--------------------->>
+<script>
+                        
+                        
+                        
+                        
+                        
+// Dados de equipamentos
+const equipmentData = [
+    { referencia: "401020", equipamento: "ESFIGNOMANOMETRO ANEROIDE MANUAL", id: 1 },
+    { referencia: "401021", equipamento: "ESTETOSCÓPIO", id: 2 },
+    { referencia: "401027", equipamento: "OXÍMETRO", id: 3 },
+    { referencia: "401022", equipamento: "ESFIGNOMANOMETRO DIGITAL", id: 4 },
+    { referencia: "401026", equipamento: "MONITOR PARÂMETROS VITAIS HE 6000", id: 5 },
+    { referencia: "401050", equipamento: "MONITOR PARÂMETROS VITAIS HE 50", id: 6 },
+    { referencia: "401024", equipamento: "TERMÔMETRO DIGITAL", id: 7 },
+    { referencia: "401023", equipamento: "TERMÔMETRO DIGITAL INFRAVERMELHOS", id: 8 },
+    { referencia: "404024", equipamento: "LANTERNA OBSERVAÇÃO", id: 9 },
+    { referencia: "401025", equipamento: "GLICÔMETRO", id: 10 },
+    { referencia: "404011", equipamento: "PALHETAS DX", id: 11 },
+    { referencia: "404001", equipamento: "ANCETAS DX", id: 12 },
+    { referencia: "403001", equipamento: "COMPRESSAS 5X5", id: 13 },
+    { referencia: "403017", equipamento: "TUBO OROFARÍNGEO PEDIÁTRICO TAMANHO 000", id: 14 },
+    { referencia: "405018", equipamento: "TUBO OROFARÍNGEO PEDIÁTRICO TAMANHO 00", id: 15 },
+    { referencia: "405019", equipamento: "TUBO OROFARÍNGEO PEDIÁTRICO TAMANHO 0", id: 16 },
+    { referencia: "405020", equipamento: "TUBO OROFARÍNGEO PEDIÁTRICO TAMANHO 1", id: 17 },
+    { referencia: "405012", equipamento: "TUBO OROFARÍNGEO ADULTO TAMANHO 1.5", id: 18 },
+    { referencia: "405013", equipamento: "TUBO OROFARÍNGEO ADULTO TAMANHO 2", id: 19 },
+    { referencia: "405014", equipamento: "TUBO OROFARÍNGEO ADULTO TAMANHO 3", id: 20 },
+    { referencia: "405015", equipamento: "TUBO OROFARÍNGEO ADULTO TAMANHO 4", id: 21 },
+    { referencia: "405016", equipamento: "TUBO OROFARÍNGEO ADULTO TAMANHO 5", id: 22 },
+    { referencia: "-", equipamento: "TUBOS NASOFARÍNGEOS DESCARTAVEIS (tamanhos variados)", id: 23 },
+    { referencia: "405007", equipamento: "POCKET MASK", id: 24 },
+    { referencia: "405021", equipamento: "INSUFLADOR MANUAL ADULTO C/ BALONETE", id: 25 },
+    { referencia: "405028", equipamento: "FILTRO INSUFLADOR ADULTO", id: 26 },
+    { referencia: "405024", equipamento: "MÁSCARA INSUFLADOR ADULTO TAMANHO 4", id: 27 },
+    { referencia: "405025", equipamento: "MÁSCARA INSUFLADOR ADULTO TAMANHO 5", id: 28 },
+    { referencia: "-", equipamento: "Tubo conexão", id: 29 },
+    { referencia: "405001", equipamento: "MÁSCARAS SIMPLES O2 ADULTO", id: 30 },
+    { referencia: "405002", equipamento: "MÁSCARAS ALTO DÉBITO O2 ADULTO", id: 31 },
+    { referencia: "405003", equipamento: "CANULAS O2 ADULTO", id: 32 },
+    { referencia: "405022", equipamento: "INSUFLADOR MANUAL PEDIÁTRICO C/ BALONETE", id: 33 },
+    { referencia: "405028", equipamento: "FILTRO INSUFLADOR PEDIÁTRICO", id: 34 },
+    { referencia: "405027", equipamento: "MÁSCARA INSUFLADOR PEDIÁTRICO TAMANHO 2", id: 35 },
+    { referencia: "405023", equipamento: "MÁSCARA INSUFLADOR PEDIÁTRICO TAMANHO 3", id: 36 },
+    { referencia: "-", equipamento: "Tubo conexão", id: 37 },
+    { referencia: "405004", equipamento: "MÁSCARAS SIMPLES O2 PEDIÁTRICO", id: 38 },
+    { referencia: "405005", equipamento: "MÁSCARA ALTO DÉBITO O2 PEDIÁTRICO", id: 39 },
+    { referencia: "405006", equipamento: "CANULA NASAL PEDIÁTRICO", id: 40 },
+    { referencia: "405009", equipamento: "SACOS VÔMITO", id: 41 },
+    { referencia: "404025", equipamento: "CONTENTOR CORTANTES", id: 42 },
+    { referencia: "-", equipamento: "GARRAFA ÁGUA 250ML", id: 43 },
+    { referencia: "-", equipamento: "COPOS PLÁSTICO", id: 44 },
+    { referencia: "-", equipamento: "PACOTES AÇÚCAR", id: 45 },
+    { referencia: "404019", equipamento: "COBERTURA ISOTÉRMICA PRATA/DOURADO", id: 46 },
+    { referencia: "401037", equipamento: "TESOURA", id: 47 },
+    { referencia: "403002", equipamento:  "COMPRESSAS10X10 (8X5UN.)", id: 48},
+    { referencia: "403003", equipamento:  "COMPRESSAS 20X10", id: 49 },
+    { referencia: "403005", equipamento:  "PENSOS ABSORVENTES", id: 50},
+    { referencia: "402004", equipamento:  "SORO FISIOLOGICO ATE 30ML", id: 51},
+    { referencia: "402005", equipamento:  "SORO FISIOLOGICO 60ML", id: 52},
+    { referencia: "402002", equipamento:  "DESINFETANTE ATE 30ML", id: 53},
+    { referencia: "404026", equipamento:  "ROLOS FITA ADESIVA", id: 54},
+    { referencia: "401028", equipamento:  "PARES OCULOS", id: 55},
+    { referencia: "404010", equipamento:  "SACO GELO", id: 56},
+    { referencia: "404007", equipamento:  "SACO CALOR", id: 57 },
+    { referencia: "401001", equipamento:  "MACA REMOÇÃO", id: 58 },
+    { referencia: "401002", equipamento:  "MẠCA VACUO ( COQUILLE)", id: 59 },
+    { referencia: "401010", equipamento:  "COLETE EXTRAÇÃO", id: 60 },
+    { referencia: "401011", equipamento:  "CADEIRA TRANSPORTE", id: 61  },
+    { referencia: "41008", equipamento:  "PLANO DURO PEDIATRICO", id: 62 },
+    { referencia: "41009", equipamento:  "TALA TRAÇÃO", id: 63 },
+    { referencia: "41004", equipamento:  " ADULTO", id: 64 },
+    { referencia: "41005", equipamento: "MOBILIZADORES CABEÇA", id: 65 },
+    { referencia: "41006", equipamento: "CINTOS (ARANHA)", id: 66 },
+    { referencia: "41007", equipamento: "CINTOS CABEÇA (CABRESTOS)", id: 67 },
+    { referencia: "405001", equipamento: "MASCARAS SIMPLES 02 ADULTO", id: 68 },
+    { referencia: "405002", equipamento: "MASCARAS ALTO DEBITO 02 ADULTO", id: 69 },
+    { referencia: "405003", equipamento: "CANULAS 02 ADULTO", id: 70 },
+    { referencia: "403002", equipamento: "COMPRESSAS 10X10 (8X5UN.)", id: 71 },
+    { referencia: "403003", equipamento: "COMPRESSAS 20X10", id: 72 },
+    { referencia: "403005", equipamento: "PENSOS ABSORVENTES", id: 73 },
+    { referencia: "104026", equipamento: "ROLOS FITA ADESIVA", id: 74 },
+    { referencia: "403006", equipamento: "ROLOS LIGADURAS 10 CM", id: 75 },
+    { referencia: "402006", equipamento: "SOROS FISIOLOGICO 100 ML", id: 76 },
+    { referencia: "404010", equipamento: "SACO GELO", id: 77 },
+    { referencia: "404007", equipamento: "SACO CALOR", id: 78 },
+    { referencia: "401051", equipamento: "TINA TIPO RIM", id: 79 },
+    { referencia: "404004", equipamento: "PARES LUVAS ESTERILIZADAS", id: 80 },
+    { referencia: "403004", equipamento: "COMPRESSAS 20X15 (8 EMB X 5 UN)", id: 81 },
+    { referencia: "401056", equipamento: "COLARES CERVICAIS ADULTO (3 TAM. DIFERENTES)", id: 82 },
+    { referencia: "401057", equipamento: "COLARES CERVICAIS PEDIATRICOS (3 TAM. DIFERENTES)", id: 83 },
+    { referencia: "401018", equipamento: "TALAS 50 CM", id: 84 },
+    { referencia: "401017", equipamento: "TALAS 70 CM", id: 85 },
+    { referencia: "401016", equipamento: "TALAS 90 CM ", id: 86 },
+    { referencia: "401014", equipamento: "TALAS 1.20 CM", id: 87 },
+    { referencia: "404017", equipamento: "SONDA ASPIRAÇÃO ADULTO CH 16", id: 88 },
+    { referencia: "404016", equipamento: "SONDA ASPIRAÇÃO ADULTO CH 14", id: 89 },
+    { referencia: "404012", equipamento: "SONDA ASPIRAÇÃO PEDIATRICA CH 6", id: 90 },
+    { referencia: "404013", equipamento: "SONDA ASPIRAÇÃO PEDIATRICA CH 8", id: 91 },
+    { referencia: "405008", equipamento: "SONDA NASAL ADULTO CH 14", id: 92 },
+    { referencia: "405009", equipamento: "SONDA NASAL ADULTO CH 16", id: 93 },
+    { referencia: "405010", equipamento: "SONDA NASAL PEDIATRICA CH 6", id: 94 },
+    { referencia: "405011", equipamento: "SONDA NASAL PEDIATRICA CH 8", id: 95 },
+    { referencia: "404021", equipamento: "KIT PARTO", id: 96 },
+    { referencia: "405032", equipamento: "CIRCUITO FIXO 02 CAPACIDADE MINIMA 2000ML REDUTOR DEBITOMETR PELO MENOS 15L/M VALVULA REGULAÇÃO DEBITO B-20L", id: 97 },
+    { referencia: "405029", equipamento: "02 PORTATIL CAPACIDADE MINIMA 400ML, REDUTOR, DEBITOMETRO PELO MENOS 15L/M VALVULA REGULAÇÃO DEBITO B-2L", id: 98 },
+    { referencia: "404049", equipamento: "ASPIRADOR SECREÇÕES ELETRICO PORTATIL COM PRESSÃO ASPIRAÇÃO REGULAVEL COM ACUMULADOR ENERGIA", id: 99 },
+    { referencia: "404006", equipamento: "TUBO SECREÇÕES", id: 100 },
+    { referencia: "404005", equipamento: "SACO ASPIRADOR", id: 101 },
+    { referencia: "405030", equipamento: "BALA OXIGENIO B 5L", id: 102 },
+    { referencia: "401013", equipamento: "DAE (SÓ NAS AMBULANCIAS DO PNDAE DO INEM )", id: 103 },
+    { referencia: "404002", equipamento: "CAIXA LUVAS NÃO ESTERILIZADAS", id: 104 },
+    { referencia: "404025", equipamento: "CONTENTOR CORTANTES", id: 105 },
+    { referencia: "401033", equipamento: "401033", id: 106 },
+    { referencia: "401034", equipamento: "401034", id: 107 },
+    { referencia: "404020", equipamento: "401012", id: 108 },
+    { referencia: "401012", equipamento: "MACA TRANSFÉRENCIA (LONA)", id: 109 },
+    { referencia: "404008", equipamento: "MANTA ISOTERMICA", id: 110 },
+    { referencia: "403007", equipamento: "LENÇOIS DESCARTAVEIS (MÍNIMO)", id: 111 },
+    { referencia: "401036", equipamento: "LUVAS PROTEÇÃO (TRABALHO ) PARES ", id: 112 },
+    { referencia: "401035", equipamento: "CAPACETES ", id: 113 },
+    { referencia: "-", equipamento: "MACA PRINCIPAL ", id: 114 },
+    { referencia: "-", equipamento: "SORO FISIOLOGICO 100ML", id: 115 },
+    { referencia: "-", equipamento: "TUBO ASPIRADOR", id: 116 },
+    { referencia: "-", equipamento: "SUPORTES SOROS", id: 117 },
+    { referencia: "-", equipamento: "ARRASTADEIRA", id: 118 },
+    { referencia: "-", equipamento: "CINTOS CADEIRA RODAS", id: 119 },
+    { referencia: "-", equipamento: "COLETE COM REFLETORES", id: 120 },
+    { referencia: "-", equipamento: "CORTA CINTOS", id: 121 },
+    { referencia: "-", equipamento: "SINAIS SONOROS", id: 123 },
+    { referencia: "-", equipamento: "LUZES SINALIZAÇÃO", id: 124 },
+    { referencia: "-", equipamento: "LANTERNA PORTATIL COM ACUMULADOR DE ENERGIA", id: 125 },
+    { referencia: "-", equipamento: "EXTINTOR", id: 126 },
+    // Adicione mais conforme necessário
+];
+
+// Constantes
+const ALERT_DAYS_AHEAD = 30; // dias antes do estoque mínimo ou da expiração para alertar
+
+// Estado
+let inventory = [];
+let sortDescending = true; // ordenação padrão referência decrescente
+
+// Carregar do localStorage ou iniciar
+function loadInventory() {
+    const saved = localStorage.getItem('ph_stock_inventory');
+    if (saved) {
+        try {
+            inventory = JSON.parse(saved);
+        } catch {
+            inventory = [];
+        }
+    }
+    // Mesclar dados de equipamentos com o estado do inventário para garantir que todo o equipamento esteja presente
+    equipmentData.forEach(eq => {
+        if (!inventory.some(item => item.referencia === eq.referencia && item.equipamento === eq.equipamento)) {
+            inventory.push({
+                referencia: eq.referencia,
+                equipamento: eq.equipamento,
+                quantidade: 0,
+                validade: "",
+                mediaMensal: 0,
+                id: eq.id,
+            });
+        }
+    });
+}
+
+// Salvar inventário no localStorage
+function saveInventory() {
+    localStorage.setItem('ph_stock_inventory', JSON.stringify(inventory));
+    showSaveMessage();
+    updateAlerts();
+    // Chama a função para baixar o TXT após salvar
+    downloadInventoryAsTxt();
+}
+
+// Calcular o estoque mínimo com base no consumo médio mensal, avisando com 30 dias de antecedência
+//O estoque mínimo é o uso médio mensal * (dias de alerta / 30), arredondado para cima
+function calcMinStock(avgMonthly) {
+    return Math.ceil((avgMonthly * ALERT_DAYS_AHEAD) / 30);
+}
+
+// Verificar a data de validade de um item, retorna verdadeiro se estiver expirado ou próximo da expiração dentro dos dias de alerta
+function expirationStatus(validade) {
+    if (!validade) return "Sem data";
+    const now = new Date();
+    const expDate = new Date(validade + "T23:59:59"); // tratar o final do dia como vencimento
+    const diffMs = expDate - now;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return "Expirado";
+    if (diffDays <= ALERT_DAYS_AHEAD) return "A expirar (" + diffDays + "d)";
+    return "Válido";
+}
+
+//Gerar alertas para itens com baixo estoque ou próximos do vencimento
+function generateAlerts() {
+    let alerts = [];
+    const now = new Date(); // Use a data atual, não uma data fixa
+    inventory.forEach(item => {
+        const minStock = calcMinStock(item.mediaMensal);
+        if (item.quantidade < minStock) {
+            alerts.push(`⚠️ Stock baixo para <strong>${item.equipamento}</strong>. Mínimo requerido: ${minStock}, em stock: ${item.quantidade}`);
+        }
+        if (item.validade) {
+            const expDate = new Date(item.validade + "T23:59:59");
+            const diffMs = expDate - now;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) {
+                alerts.push(`❌ Material <strong>${item.equipamento}</strong> está Expirado desde ${item.validade}`);
+            } else if (diffDays <= ALERT_DAYS_AHEAD) {
+                alerts.push(`⚠️ Material <strong>${item.equipamento}</strong> com validade próxima em ${item.validade} (${diffDays} dias)`);
+            }
+        }
+    });
+    return alerts;
+}
+
+// Atualizar painel de alertas
+function updateAlerts() {
+    const alertList = document.getElementById('alerts-list');
+    alertList.innerHTML = "";
+    const alerts = generateAlerts();
+    if (alerts.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = "Sem alertas de stock baixo ou validade próxima.";
+        li.className = "success";
+        alertList.appendChild(li);
+        return;
+    }
+    alerts.forEach(alert => {
+        const li = document.createElement('li');
+        li.innerHTML = alert;
+        li.className = "alert"; // Adiciona a classe 'alert' para estilização visual, se aplicável
+        alertList.appendChild(li);
+    });
+}
+
+// Normalizar referência para ordenação (numérica ou alternativa)
+function normalizeRef(ref) {
+    // Remover não dígitos para interpretar referências numéricas
+    const digits = ref.replace(/\D/g,'');
+    if (digits === '') return -Infinity;
+    return parseInt(digits);
+}
+
+// Criar linha para cada item de equipamento
+/*JAVA-SCRIPT*/
+// Criar linha para cada item de equipamento\ 
+function buildTableRow(item, index) {
+    const tr = document.createElement('tr');
+    // Calcular o estoque mínimo agora
+    const minStock = calcMinStock(item.mediaMensal);
+
+    // Lógica do status
+    const expStatus = expirationStatus(item.validade);
+    let statusClass = "";
+    if (expStatus === "Expirado") statusClass = "expired";
+    else if (expStatus.startsWith("A expirar")) statusClass = "alert";
+
+    // Se o estoque estiver baixo, a classe 'stock-low' sempre prevalece ou é adicionada
+    if (item.quantidade < minStock) {
+        statusClass = "stock-low";
+    }
+
+    tr.className = statusClass;
+
+    // Referência
+    let tdRef = document.createElement('td');
+    tdRef.textContent = item.referencia;
+    tr.appendChild(tdRef);
+
+    // Nome do Equipamento
+    let tdEq = document.createElement('td');
+    tdEq.textContent = item.equipamento;
+    tdEq.style.textAlign = 'center';
+    tr.appendChild(tdEq);
+
+    // Quantidade em estoque (INPUT/ENTRADA)
+    let tdQt = document.createElement('td');
+    let inputQt = document.createElement('input');
+    inputQt.type = 'number';
+    inputQt.min = "0";
+    inputQt.value = item.quantidade;
+    inputQt.setAttribute('aria-label', `Quantidade em stock para ${item.equipamento}`);
+    inputQt.addEventListener('change', (e) => {
+        const val = parseInt(e.target.value);
+        const originalIndex = inventory.findIndex(i => i.id === item.id);
+        if (originalIndex !== -1) {
+            inventory[originalIndex].quantidade = isNaN(val) || val < 0 ? 0 : val;
+            // RE-ADICIONADO: Renderiza a tabela e atualiza alertas IMEDIATAMENTE
+            renderTable();
+            updateAlerts();
+           
+        }
+    });
+    tdQt.appendChild(inputQt);
+    tr.appendChild(tdQt);
+
+    // Data de validade (INPUT/entrada)
+    let tdVal = document.createElement('td');
+    let inputVal = document.createElement('input');
+    inputVal.type = 'date';
+    inputVal.value = item.validade || "";
+    inputVal.setAttribute('aria-label', `Data de validade para ${item.equipamento}`);
+    inputVal.addEventListener('change', (e) => {
+        const originalIndex = inventory.findIndex(i => i.id === item.id);
+        if (originalIndex !== -1) {
+            inventory[originalIndex].validade = e.target.value;
+            // RE-ADICIONADO: Renderiza a tabela e atualiza alertas IMEDIATAMENTE
+            renderTable();
+            updateAlerts();
+            
+        }
+    });
+    tdVal.appendChild(inputVal);
+    tr.appendChild(tdVal);
+
+    //Média de consumo mensal (entrada)
+    let tdAvg = document.createElement('td');
+    let inputAvg = document.createElement('input');
+    inputAvg.type = 'number';
+    inputAvg.min = "0";
+    inputAvg.value = item.mediaMensal;
+    inputAvg.setAttribute('aria-label', `Média de consumo mensal para ${item.equipamento}`);
+    inputAvg.addEventListener('change', e => {
+        const val = parseInt(e.target.value);
+        const originalIndex = inventory.findIndex(i => i.id === item.id);
+        if (originalIndex !== -1) {
+            inventory[originalIndex].mediaMensal = isNaN(val) || val < 0 ? 0 : val;
+            // RE-ADICIONADO: Renderiza a tabela e atualiza alertas IMEDIATAMENTE
+            renderTable();
+            updateAlerts();
+            // REMOVIDO: saveInventory() daqui - não salva automaticamente no localStorage
+        }
+    });
+    tdAvg.appendChild(inputAvg);
+    tr.appendChild(tdAvg);
+
+    //Quantidade mínima de estoque necessária
+    let tdMin = document.createElement('td');
+    tdMin.textContent = minStock;
+    tr.appendChild(tdMin);
+
+    // Coluna para remover stock
+    let tdRemove = document.createElement('td');
+    const removeContainer = document.createElement('div');
+    removeContainer.style.display = 'flex';
+    removeContainer.style.gap = '5px';
+
+    const inputRemove = document.createElement('input');
+    inputRemove.type = 'number';
+    inputRemove.min = "0";
+    inputRemove.value = "0";
+    inputRemove.style.width = '60px';
+    inputRemove.setAttribute('aria-label', `Quantidade a remover para ${item.equipamento}`);
+
+    const btnRemove = document.createElement('button');
+    btnRemove.textContent = 'Remover';
+    btnRemove.className = 'btn-remove-stock';
+    btnRemove.setAttribute('aria-label', `Remover stock de ${item.equipamento}`);
+    btnRemove.addEventListener('click', () => {
+        const qtyToRemove = parseInt(inputRemove.value);
+        if (isNaN(qtyToRemove) || qtyToRemove <= 0) {
+            alert("Por favor, insira uma quantidade válida para remover.");
+            return;
+        }
+
+        const originalIndex = inventory.findIndex(i => i.id === item.id);
+        if (originalIndex !== -1) {
+            const currentStock = inventory[originalIndex].quantidade;
+            if (qtyToRemove > currentStock) {
+                alert(`Não é possível remover ${qtyToRemove} unidades. Apenas ${currentStock} em stock.`);
+                return;
+            }
+
+            inventory[originalIndex].quantidade -= qtyToRemove;
+            // RE-ADICIONADO: Renderiza a tabela e atualiza alertas IMEDIATAMENTE
+            renderTable();
+            updateAlerts();
+            // REMOVIDO: saveInventory() daqui - não salva automaticamente no localStorage
+
+            // Mensagem de confirmação (esta pode continuar a aparecer imediatamente)
+            alert(`Foram removidos ${qtyToRemove} de ${item.equipamento}. Novo stock: ${inventory[originalIndex].quantidade}.`);
+
+            // Limpa o campo de input após a remoção
+            inputRemove.value = "0";
+        }
+    });
+
+    removeContainer.appendChild(inputRemove);
+    removeContainer.appendChild(btnRemove);
+    tdRemove.appendChild(removeContainer);
+    tr.appendChild(tdRemove);
+
+    // Botão de requisição - mostrado se o estoque estiver abaixo do mínimo
+    let tdReq = document.createElement('td');
+    const btnReq = document.createElement('button');
+    btnReq.textContent = 'Marcar para Requisição';
+    btnReq.disabled = item.quantidade >= minStock;
+    btnReq.setAttribute('aria-label', 'Marcar equipamento para compra');
+    btnReq.addEventListener('click', () => {
+        alert(`Equipamento "${item.equipamento}" marcado para requisição de compra.`);
+    });
+    tdReq.appendChild(btnReq);
+    tr.appendChild(tdReq);
+
+    return tr;
+}
+// Renderizar todo o corpo da tabela
+function renderTable() {
+    const tbody = document.querySelector("#inventory-table tbody");
+    tbody.innerHTML = "";
+
+    // Ordenar por referência numérica em ordem decrescente se sortDescending for verdadeiro
+    let itemsSorted = [...inventory];
+    itemsSorted.sort((a,b) => {
+        let refA = normalizeRef(a.referencia);
+        let refB = normalizeRef(b.referencia);
+        if(sortDescending) return refB - refA;
+        else return refA - refB;
+    });
+
+    itemsSorted.forEach((item, idx) => {
+        tbody.appendChild(buildTableRow(item, inventory.indexOf(item)));
+    });
+}
+
+// Mostre a mensagem de salvar brevemente
+function showSaveMessage() {
+    const msg = document.getElementById('save-msg');
+    if (msg) { // Verifica se o elemento existe antes de tentar manipulá-lo
+        msg.hidden = false;
+        setTimeout(() => {
+            msg.hidden = true;
+        }, 3000);
+    }
+}
+
+// Função para formatar o inventário como texto e fazer o download (APENAS ALERTAS)
+function downloadInventoryAsTxt() {
+    let txtContent = "Relatório de Alertas de Inventário de Equipamentos Pré-Hospitalares\n";
+    txtContent += "Data do Relatório: " + new Date().toLocaleDateString('pt-PT') + "\n\n";
+    txtContent += "--------------------------------------------------------\n";
+    txtContent += "Referência | Equipamento              | Quantidade | Validade   | Stock Mínimo | Status\n";
+    txtContent += "--------------------------------------------------------\n";
+
+    let alertsOnly = []; // Array para armazenar apenas os itens com alerta
+
+    // Iterar sobre o inventário para identificar os itens em alerta
+    inventory.forEach(item => {
+        const minStock = calcMinStock(item.mediaMensal);
+        const expStatus = expirationStatus(item.validade);
+        let itemStatus = ""; // Para guardar o status específico do item
+
+        let isAlert = false;
+        // Verifica se o stock está baixo
+        if (item.quantidade < minStock) {
+            isAlert = true;
+            itemStatus = `Stock Baixo (${item.quantidade}/${minStock})`;
+        }
+
+        // Verifica o status de validade
+        if (expStatus === "Expirado") {
+            isAlert = true;
+            if (itemStatus) itemStatus += "; "; // Adiciona separador se já houver outro status
+            itemStatus += `Expirado (${item.validade})`;
+        } else if (expStatus.startsWith("A expirar")) {
+            isAlert = true;
+            if (itemStatus) itemStatus += "; ";
+            // Extrai os dias de "A expirar (Xd)"
+            const daysMatch = expStatus.match(/\(([^)]+)\)/);
+            itemStatus += `A Expirar (${daysMatch ? daysMatch[1] : item.validade})`;
+        }
+
+        if (isAlert) {
+            // Adiciona o item ao array de alertas com o status consolidado
+            alertsOnly.push({ ...item, consolidatedStatus: itemStatus, minStockNeeded: minStock });
+        }
+    });
+
+    // Ordenar os itens em alerta pela referência
+    alertsOnly.sort((a,b) => {
+        let refA = normalizeRef(a.referencia);
+        let refB = normalizeRef(b.referencia);
+        return sortDescending ? refB - refA : refA - refB; // Mantém a ordenação atual da tabela
+    });
+
+    if (alertsOnly.length === 0) {
+        txtContent += "Não há materiais em alerta de stock ou validade no momento.\n";
+    } else {
+        alertsOnly.forEach(item => {
+            // Formatação para garantir alinhamento (ajuste os números conforme necessário para suas colunas)
+            const ref = String(item.referencia).padEnd(10).substring(0, 10);
+            const equip = String(item.equipamento).padEnd(25).substring(0, 25);
+            const qt = String(item.quantidade).padEnd(10);
+            const val = (item.validade || "N/A").padEnd(10);
+            const min = String(item.minStockNeeded).padEnd(12);
+            const statusCol = String(item.consolidatedStatus).padEnd(25); // Ajustei o padEnd para caber o status completo
+
+            txtContent += `${ref} | ${equip} | ${qt} | ${val} | ${min} | ${statusCol}\n`;
+        });
+    }
+    txtContent += "--------------------------------------------------------\n";
+    txtContent += "\nNota: Este relatório inclui apenas materiais com stock baixo ou validade próxima.\n";
+
+
+    // Criar um Ficheiro Virtual (Blob)
+    const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
+
+    // Gerar um URL para o Ficheiro Virtual
+    const url = URL.createObjectURL(blob);
+
+    // Simular um Clique num Link para Download
+    const a = document.createElement('a');
+    a.href = url;
+    // Define o nome do arquivo, adicionando a data atual e indicando que é um relatório de ALERTA
+    const today = new Date();
+    const fileName = `Inventario_Alertas_PH_${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}.txt`;
+    a.download = fileName; // Nome do arquivo quando for baixado
+    document.body.appendChild(a); // Adiciona o link ao corpo do documento (temporariamente)
+    a.click(); // Simula o clique
+    document.body.removeChild(a); // Remove o link
+    URL.revokeObjectURL(url); // Libera o URL do objeto
+}
+
+
+// Iniciar aplicativo
+function init() {
+    loadInventory();
+    renderTable();
+    updateAlerts();
+
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn) { // Verifica se o botão existe
+        saveBtn.addEventListener('click', () => {
+            saveInventory();
+        });
+    }
+
+    // Classificar por referência em ordem decrescente/crescente ao clicar no rótulo
+    const sortLabel = document.getElementById('sort-referencia');
+    if (sortLabel) {
+        sortLabel.addEventListener('click', () => {
+            sortDescending = !sortDescending; // Alternar a ordem de classificação
+            sortLabel.textContent = `Referência ${sortDescending ? '⬇️' : '⬆️'}`; // Atualiza o ícone
+            sortLabel.setAttribute('aria-pressed', sortDescending); // Atualiza o estado acessível
+            sortLabel.setAttribute('aria-label', `Ordenar referências da ${sortDescending ? 'maior para a menor' : 'menor para a maior'}`);
+            renderTable(); // Renderiza a tabela com a nova ordem
+        });
+    }
+
+    // Lógica para o cabeçalho fixo (sticky header)
+    const header = document.querySelector('.header-container');
+    const headerOffsetTop = header.offsetTop; // Posição inicial do cabeçalho
+
+    function stickyHeader() {
+        if (window.pageYOffset > headerOffsetTop) {
+            header.classList.add('sticky');
+            // Adicionar padding-top ao body para evitar que o conteúdo "salte"
+            document.body.style.paddingTop = header.offsetHeight + 'px';
+        } else {
+            header.classList.remove('sticky');
+            document.body.style.paddingTop = '0'; // Remover o padding
+        }
+    }
+
+    // Chama a função stickyHeader sempre que a página é rolada
+    window.addEventListener('scroll', stickyHeader);
+
+    // Garante que a função stickyHeader seja chamada ao carregar a página
+    // Caso a página seja carregada já com scroll (e.g., recarregar no meio)
+    stickyHeader();
+}
+
+// Iniciar o aplicativo quando o DOM estiver completamente carregado
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+<!-------------------FIM JAVASCRIPT----------------------------------->
+</body>
+</html>
+
